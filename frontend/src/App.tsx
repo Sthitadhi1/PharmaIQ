@@ -1,9 +1,9 @@
 import { Route, Routes } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import DashboardHome from './pages/DashboardHome';
+import Dashboard from './pages/Dashboard';
 import PatientAnalytics from './pages/PatientAnalytics';
 import ClinicalTrials from './pages/ClinicalTrials';
-import SalesIntelligence from './pages/SalesIntelligence';
+import SalesAnalytics from './pages/SalesAnalytics';
 import DoctorSegmentation from './pages/DoctorSegmentation';
 
 function App() {
@@ -13,10 +13,10 @@ function App() {
         <Sidebar />
         <main className="flex-1 p-6 lg:p-8">
           <Routes>
-            <Route path="/" element={<DashboardHome />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/patients" element={<PatientAnalytics />} />
             <Route path="/clinical" element={<ClinicalTrials />} />
-            <Route path="/sales" element={<SalesIntelligence />} />
+            <Route path="/sales" element={<SalesAnalytics />} />
             <Route path="/doctors" element={<DoctorSegmentation />} />
           </Routes>
         </main>

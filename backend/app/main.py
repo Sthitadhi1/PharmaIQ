@@ -1,15 +1,25 @@
 from fastapi import FastAPI
-from app.routes import auth, patients, clinical, sales, doctors, analytics
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes import (
+    patient_router,
+    clinical_router,
+    sales_router,
+    doctor_router,
+    dashboard_router
+)
 
 app = FastAPI(title='PharmaIQ API', version='0.1.0')
 
-app.include_router(auth.router, prefix='/auth', tags=['auth'])
-app.include_router(patients.router, prefix='', tags=['patients'])
-app.include_router(clinical.router, prefix='', tags=['clinical'])
-app.include_router(sales.router, prefix='', tags=['sales'])
-app.include_router(doctors.router, prefix='', tags=['doctors'])
-app.include_router(analytics.router, prefix='/analytics', tags=['analytics'])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*']
+)
 
-@app.get('/')
-def root():
-    return {'message': 'Welcome to PharmaIQ API'}
+app.include_router(dashboard_router)
+app.include_router(patient_router)
+app.include_router(clinical_router)
+app.include_router(sales_router)
+app.include_router(doctor_router)
