@@ -1,0 +1,3 @@
+trial_id,patient_id,phase,location,completion_rate,dropout_probability,side_effects,treatment_duration,previous_missed_visits
+2001,1001,Phase II,Bangalore,72.5,18.0,Nausea;Fatigue,24,3
+2002,1003,Phase III,Mumbai,85.0,9.5,Headache,18,1

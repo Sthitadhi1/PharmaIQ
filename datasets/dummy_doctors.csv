@@ -1,0 +1,3 @@
+doctor_id,name,specialization,region,prescription_volume,patient_count,engagement_score
+4001,Dr. Meera Joshi,Cardiology,West,980,245,89.2
+4002,Dr. Ravi Singh,Endocrinology,East,740,180,72.5

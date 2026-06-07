@@ -1,0 +1,4 @@
+patient_id,name,age,gender,disease,treatment_history,blood_pressure,glucose_level,previous_visits
+1001,Anna Patel,52,Female,Diabetes,Metformin;Insulin,140/90,180,5
+1002,Marcus Lee,38,Male,Hypertension,Lisinopril,130/85,110,2
+1003,Sana Khan,67,Female,Cardiovascular,Atorvastatin,150/95,135,7

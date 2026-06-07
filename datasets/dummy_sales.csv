@@ -1,0 +1,3 @@
+sales_id,medicine,region,units_sold,revenue,date
+3001,Medicare A,North,4500,180000,2026-05-01
+3002,Medicare B,South,3800,152000,2026-05-01
