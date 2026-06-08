@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  backend:
+    build: .
+    container_name: pharmaiq-backend
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/pharmaiq
+      - SECRET_KEY=super-secret-key
+      - MODEL_PATH=ml_engine/saved_models/
+      - ENVIRONMENT=development
+      - API_VERSION=v1
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=http://localhost:5173
+    depends_on:
+      - db
+
+  frontend:
+    image: node:20-alpine
+    container_name: pharmaiq-frontend
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    container_name: pharmaiq-db
+    environment:
+      POSTGRES_DB: pharmaiq
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ml_service:
+    build: .
+    container_name: pharmaiq-ml-service
+    command: sh -c "while true; do sleep 3600; done"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

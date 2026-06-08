@@ -5,6 +5,8 @@ import PatientAnalytics from './pages/PatientAnalytics';
 import ClinicalTrials from './pages/ClinicalTrials';
 import SalesAnalytics from './pages/SalesAnalytics';
 import DoctorSegmentation from './pages/DoctorSegmentation';
+import AIAssistant from './pages/AIAssistant';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
             <Route path="/clinical" element={<ClinicalTrials />} />
             <Route path="/sales" element={<SalesAnalytics />} />
             <Route path="/doctors" element={<DoctorSegmentation />} />
+            <Route path="/executive" element={<ExecutiveDashboard />} />
+            <Route path="/ai" element={<AIAssistant />} />
           </Routes>
         </main>
       </div>
