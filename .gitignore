@@ -2,12 +2,51 @@
 node_modules
 frontend/node_modules
 frontend/dist
+frontend/build
+*.tsbuildinfo
 
 # Python
 backend/.venv
+venv/
+env/
 backend/__pycache__
 **/__pycache__
 *.pyc
+*.pyo
+*.egg-info
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+*.egg
+
+# ML & Data
+ml_engine/saved_models/*.pkl
+ml_engine/saved_models/*.joblib
+**/*.pyc
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+backend/.env
 
 # IDE
 .vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

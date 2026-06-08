@@ -2,10 +2,12 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { label: 'Dashboard', path: '/' },
+  { label: 'Executive Dashboard', path: '/executive' },
   { label: 'Patient Analytics', path: '/patients' },
   { label: 'Clinical Trials', path: '/clinical' },
   { label: 'Sales Intelligence', path: '/sales' },
-  { label: 'Doctor Segmentation', path: '/doctors' }
+  { label: 'Doctor Segmentation', path: '/doctors' },
+  { label: 'AI Assistant', path: '/ai' }
 ];
 
 function Sidebar() {
