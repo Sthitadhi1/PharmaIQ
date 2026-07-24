@@ -1,9 +1,16 @@
 from typing import List
 
+from sentence_transformers import SentenceTransformer
+
 
 class EmbeddingGenerator:
+    def __init__(self) -> None:
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
-        return [[float(sum(ord(c) for c in text) % 100) / 100.0 for _ in range(8)] for text in texts]
+        embeddings = self.model.encode(texts, convert_to_numpy=True)
+        return embeddings.tolist()
 
     def embed_query(self, query: str) -> List[float]:
-        return [float(sum(ord(c) for c in query) % 100) / 100.0 for _ in range(8)]
+        embedding = self.model.encode(query, convert_to_numpy=True)
+        return embedding.tolist()

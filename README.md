@@ -47,14 +47,16 @@ PharmaIQ solves these challenges through an AI-powered Life Sciences Decision In
 
 ## Generative AI Intelligence
 
-AI-powered document assistant using Retrieval Augmented Generation (RAG).
+AI-powered document assistant using Retrieval Augmented Generation (RAG) with a practical production-style pipeline.
 
 Capabilities:
 
-* Upload healthcare documents
-* Extract clinical/commercial insights
-* Query pharmaceutical reports
-* Generate strategic recommendations
+* Ingest healthcare and pharmaceutical documents from local files
+* Extract document text into retrievable chunks
+* Generate semantic embeddings with sentence-transformers (all-MiniLM-L6-v2)
+* Store and search embeddings with FAISS (IndexFlatL2)
+* Generate answers with the OpenAI API using retrieved context
+* Fall back gracefully to a clearly labeled extractive summary when no API key is configured
 
 Architecture:
 
@@ -62,11 +64,15 @@ Document
 
 ↓
 
-Embedding Generation
+Text Extraction
 
 ↓
 
-Vector Store
+Embedding Generation (sentence-transformers)
+
+↓
+
+Vector Search (FAISS IndexFlatL2)
 
 ↓
 
@@ -74,7 +80,7 @@ RAG Pipeline
 
 ↓
 
-AI Insights
+Generated Insights
 
 ---
 
@@ -189,9 +195,9 @@ Deployment Monitoring
 ## Generative AI
 
 * RAG Architecture
-* Embedding Engine
-* Vector Database
-* Document Intelligence
+* sentence-transformers (all-MiniLM-L6-v2) for embeddings
+* FAISS (IndexFlatL2) for vector search
+* OpenAI API for answer generation with graceful fallback
 
 ## Database
 
