@@ -1,4 +1,4 @@
-from .patient_schema import Patient, PatientList
+from .patient_schema import Patient
 from .prediction_schema import (
     PatientRiskRequest,
     PatientRiskResponse,

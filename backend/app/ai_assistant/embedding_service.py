@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import numpy as np
@@ -13,7 +12,7 @@ class EmbeddingService:
     def embed_texts(self, texts: List[str]) -> np.ndarray:
         if not texts:
             return np.zeros((0, 384), dtype=np.float32)
-        embeddings = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
+        embeddings = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False, normalize_embeddings=True)
         return np.asarray(embeddings, dtype=np.float32)
 
     def embed_query(self, query: str) -> np.ndarray:

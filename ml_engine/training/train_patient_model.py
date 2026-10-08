@@ -3,6 +3,7 @@ import numpy as np
 from ml_engine.models.patient_risk_model import PatientRiskModel
 from ml_engine.evaluation.model_metrics import calculate_accuracy, calculate_precision, calculate_recall, calculate_f1_score
 from sklearn.model_selection import train_test_split
+from ml_engine.training.paths import SAVED_MODELS_DIR, save_metrics
 
 
 def generate_sample_data(n_samples=200):
@@ -15,21 +16,30 @@ def generate_sample_data(n_samples=200):
         'glucose_level': np.random.randint(70, 200, n_samples),
         'blood_pressure_systolic': np.random.randint(100, 180, n_samples),
         'blood_pressure_diastolic': np.random.randint(60, 120, n_samples),
-        'risk': np.random.randint(0, 2, n_samples)  # Binary: 0=Low, 1=High
     }
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    # Labels were previously random (np.random.randint), so the model could only learn
+    # noise (~50% accuracy). Derive them from clinically plausible drivers plus noise.
+    signal = (
+        (df['age'] - 50) / 15
+        + (df['glucose_level'] - 135) / 35
+        + (df['blood_pressure_systolic'] - 140) / 25
+        + (df['previous_visits'] - 10) / 8
+    )
+    df['risk'] = (signal + np.random.normal(0, 0.8, n_samples) > 0).astype(int)  # 0=Low, 1=High
+    return df
 
 
-def train_patient_model():
+def train_patient_model(model_path: str = SAVED_MODELS_DIR):
     """Train and evaluate patient risk model."""
     print('=== Training Patient Risk Prediction Model ===')
 
     # Generate synthetic data
-    df = generate_sample_data(n_samples=200)
+    df = generate_sample_data(n_samples=1000)
     print(f'Generated {len(df)} training samples')
 
     # Prepare data
-    model = PatientRiskModel()
+    model = PatientRiskModel(model_path=model_path)
     X = model.prepare_data(df)
     y = df['risk'].values
 
@@ -55,7 +65,8 @@ def train_patient_model():
 
     # Save model
     model.save_models()
-    print('\nModel saved to ml_engine/saved_models/')
+    save_metrics('patient_risk', {'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1_score': f1, 'samples': len(df)}, model_path)
+    print(f'\nModel saved to {model_path}')
 
     # Test prediction
     print('\n=== Sample Prediction ===')
@@ -70,6 +81,8 @@ def train_patient_model():
     prediction = model.predict_risk_level(test_features)
     print(f'Patient Risk Prediction: {prediction}')
 
+
+main = train_patient_model
 
 if __name__ == '__main__':
     train_patient_model()

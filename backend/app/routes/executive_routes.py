@@ -1,35 +1,37 @@
-from fastapi import APIRouter
 from typing import Dict
-from app.ai_assistant.analytics_agent import AnalyticsAgent
+
+from fastapi import APIRouter
+
+from app.ai_assistant.analytics_agent import DatasetAnalyst
+from app.services import analytics_service
 from decision_engine.business_rules import DecisionAnalyzer
 from decision_engine.strategy_generator import StrategyGenerator
 
 router = APIRouter(prefix='/api/executive', tags=['Executive'])
-agent = AnalyticsAgent()
+analyst = DatasetAnalyst()
 decision_analyzer = DecisionAnalyzer()
 strategy_generator = StrategyGenerator()
 
 
 @router.get('/overview')
 def executive_overview():
+    patients = analytics_service.patient_analytics()
+    metrics = analytics_service.model_metrics()
     return {
-        'revenue_forecast': 4.8,
-        'risk_distribution': {'low': 30, 'medium': 45, 'high': 25},
+        'kpis': analytics_service.overview(),
+        'revenue_forecast': analytics_service.sales_forecast(),
+        'risk_distribution': patients['risk_distribution'],
         'model_performance': {
-            'patient_risk': {'accuracy': 0.92, 'f1_score': 0.88},
-            'trial_dropout': {'accuracy': 0.89, 'f1_score': 0.84}
+            name: {key: values.get(key) for key in ('accuracy', 'f1_score', 'r2_score', 'silhouette') if key in values}
+            for name, values in metrics.items()
         },
-        'recommendations': [
-            'Expand high-value doctor engagement in region 3',
-            'Prioritize patient adherence programs for medium-risk cohorts',
-            'Increase pharma marketing in emerging regional clusters'
-        ]
+        'recommendations': [item['text'] for item in analytics_service.recommendations()],
     }
 
 
 @router.get('/insights')
 def executive_insights():
-    return agent.analyze_question('Which region generated maximum sales?', {})
+    return analyst.answer('Which region generated maximum sales?')
 
 
 @router.post('/strategy')

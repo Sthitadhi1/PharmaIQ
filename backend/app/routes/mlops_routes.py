@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter(prefix='/api/mlops', tags=['MLOps'])
+KNOWN_PIPELINES = {'all', 'patient', 'trial', 'sales', 'doctor'}
 
 
 def get_pipeline_manager():
@@ -27,6 +28,11 @@ def mlops_status():
 
 @router.post('/run-pipeline')
 def run_pipeline(pipeline: str = 'all'):
+    if pipeline not in KNOWN_PIPELINES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Unknown pipeline "{pipeline}". Expected one of: {", ".join(sorted(KNOWN_PIPELINES))}.'
+        )
     try:
         manager = get_pipeline_manager()
         if pipeline == 'all':

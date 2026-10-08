@@ -1,37 +1,23 @@
-import { PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import MetricCard from '../components/MetricCard';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import PatientRiskForm from '../components/forms/PatientRiskForm';
+import PatientListPanel from '../components/forms/PatientListPanel';
+import ExplainPatientForm from '../components/forms/ExplainPatientForm';
 import ChartCard from '../components/ChartCard';
-import DataTable from '../components/DataTable';
+import DataState, { SourceNote } from '../components/DataState';
+import MetricCard from '../components/MetricCard';
+import useApiData from '../hooks/useApiData';
+import type { PatientAnalytics as PatientStats } from '../types/analytics';
 
-const riskData = [
-  { name: 'Low Risk', value: 520, fill: '#10b981' },
-  { name: 'Medium Risk', value: 320, fill: '#f59e0b' },
-  { name: 'High Risk', value: 110, fill: '#ef4444' }
-];
+const RISK_COLORS: Record<string, string> = { HIGH: '#ea580c', LOW: '#2563eb' };
 
-const riskTrendData = [
-  { month: 'Jan', avg_risk: 55 },
-  { month: 'Feb', avg_risk: 58 },
-  { month: 'Mar', avg_risk: 62 },
-  { month: 'Apr', avg_risk: 65 },
-  { month: 'May', avg_risk: 68 },
-  { month: 'Jun', avg_risk: 70 }
-];
-
-const diseaseData = [
-  { disease: 'Diabetes', count: 240 },
-  { disease: 'Hypertension', count: 185 },
-  { disease: 'Cardiac', count: 160 },
-  { disease: 'Respiratory', count: 120 }
-];
-
-const patients = [
-  { patient_id: 1001, name: 'Anna Patel', age: 52, gender: 'Female', disease: 'Diabetes', risk_score: 87 },
-  { patient_id: 1002, name: 'Marcus Lee', age: 38, gender: 'Male', disease: 'Hypertension', risk_score: 63 },
-  { patient_id: 1003, name: 'Sana Khan', age: 67, gender: 'Female', disease: 'Cardiovascular', risk_score: 74 }
-];
+type ModelMetrics = Record<string, Record<string, number | string>>;
 
 function PatientAnalytics() {
+  const stats = useApiData<PatientStats>('/analytics/patients');
+  const metrics = useApiData<ModelMetrics>('/analytics/model-metrics');
+  const s = stats.data;
+  const model = metrics.data?.patient_risk;
+
   return (
     <div className="space-y-8">
       <header>
@@ -39,105 +25,87 @@ function PatientAnalytics() {
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Risk Prediction Analytics</h1>
       </header>
 
-      <div className="grid gap-5 md:grid-cols-3">
-        <MetricCard title="Average Risk Score" value="68%" subtitle="Population health metric" />
-        <MetricCard title="High Risk Patients" value="110" subtitle="Requires intervention" />
-        <MetricCard title="Total Monitored" value="950" subtitle="Active patient cohort" />
-      </div>
+      <PatientRiskForm />
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <ChartCard title="Risk Category Distribution">
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={riskData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {riskData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Disease Distribution">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart
-              layout="vertical"
-              data={diseaseData}
-              margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="disease" type="category" width={100} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Model Performance">
-          <div className="space-y-3 p-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Accuracy</p>
-              <div className="mt-1 h-2 rounded-full bg-slate-200">
-                <div className="h-full w-4/5 rounded-full bg-green-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">85%</p>
+      <DataState loading={stats.loading} error={stats.error} ready={!!s}>
+        {s && (
+          <>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <MetricCard title="Patients Monitored" value={String(s.total_patients)} subtitle={`Average age ${s.avg_age}`} />
+              <MetricCard title="High-Risk Patients" value={String(s.high_risk_patients)} subtitle={`${s.high_risk_pct}% of all patients`} />
+              <MetricCard title="Avg Medication Adherence" value={`${s.avg_adherence}%`} subtitle="Across all patients" />
+              <MetricCard title="Diabetic Patients" value={`${s.diabetic_pct}%`} subtitle="Share of the cohort" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Precision</p>
-              <div className="mt-1 h-2 rounded-full bg-slate-200">
-                <div className="h-full w-3/4 rounded-full bg-blue-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">82%</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Recall</p>
-              <div className="mt-1 h-2 rounded-full bg-slate-200">
-                <div className="h-full w-4/5 rounded-full bg-purple-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">88%</p>
-            </div>
-          </div>
-        </ChartCard>
-      </div>
+            <SourceNote files="patients.csv" />
 
-      <ChartCard title="Average Risk Score Trend">
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={riskTrendData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="avg_risk" stroke="#ef4444" strokeWidth={3} name="Avg Risk Score" />
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
+            <div className="grid gap-5 xl:grid-cols-3">
+              <ChartCard title="Risk Level Distribution">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie isAnimationActive={false} data={s.risk_distribution} dataKey="value" nameKey="name" outerRadius={95} label={({ name, value }) => `${name}: ${value}`}>
+                      {s.risk_distribution.map((entry) => <Cell key={entry.name} fill={RISK_COLORS[entry.name] ?? '#64748b'} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
 
-      <div>
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">Patient Risk Details</h2>
-        <DataTable
-          columns={[
-            { key: 'patient_id', label: 'ID' },
-            { key: 'name', label: 'Patient Name' },
-            { key: 'age', label: 'Age' },
-            { key: 'gender', label: 'Gender' },
-            { key: 'disease', label: 'Condition' },
-            { key: 'risk_score', label: 'Risk Score (%)' }
-          ]}
-          data={patients}
-        />
-      </div>
+              <ChartCard title="High-Risk Share by Age Group (%)">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={s.by_age_group}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="age_group" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Bar dataKey="high_risk_pct" name="High risk %" fill="#ea580c" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard title="Risk Model Performance (test set)">
+                {model ? (
+                  <div className="space-y-4 p-2">
+                    {(['accuracy', 'precision', 'recall', 'f1_score'] as const).map((key) => {
+                      const value = Number(model[key] ?? 0) * 100;
+                      return (
+                        <div key={key}>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-semibold capitalize text-slate-700">{key.replace('_', ' ')}</span>
+                            <span className="text-slate-600">{value.toFixed(1)}%</span>
+                          </div>
+                          <div className="mt-1 h-2 rounded-full bg-slate-200">
+                            <div className="h-full rounded-full bg-blue-600" style={{ width: `${value}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <p className="text-xs text-slate-500">Trained {String(model.trained_at ?? '')} on {String(model.samples ?? '')} samples</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">Model not trained yet. Run python -m ml_engine.training.train_all.</p>
+                )}
+              </ChartCard>
+            </div>
+
+            <ChartCard title="High-Risk vs Low-Risk Patients: Averages">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={s.by_risk_level}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="risk_level" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="avg_adherence" name="Adherence %" fill="#2563eb" />
+                  <Bar dataKey="avg_admissions" name="Prior admissions" fill="#ea580c" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </>
+        )}
+      </DataState>
+
+      <ExplainPatientForm />
+      <PatientListPanel />
     </div>
   );
 }

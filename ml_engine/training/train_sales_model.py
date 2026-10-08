@@ -3,6 +3,7 @@ import numpy as np
 from ml_engine.models.sales_forecasting import SalesForecastingModel
 from ml_engine.evaluation.model_metrics import calculate_accuracy, calculate_precision
 from sklearn.model_selection import train_test_split
+from ml_engine.training.paths import SAVED_MODELS_DIR, save_metrics
 from sklearn.metrics import mean_squared_error, r2_score
 
 
@@ -15,21 +16,28 @@ def generate_sample_data(n_samples=200):
         'season': np.random.randint(1, 5, n_samples),  # Q1-Q4
         'region_code': np.random.randint(1, 6, n_samples),  # 5 regions
         'product_category': np.random.randint(1, 4, n_samples),
-        'forecast_sales': np.random.randint(15000, 120000, n_samples)
     }
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    # Target was previously random and unrelated to the inputs; model it as growth on
+    # historical sales driven by marketing spend and seasonality, plus noise.
+    seasonal = df['season'].map({1: 0.95, 2: 1.0, 3: 1.05, 4: 1.12})
+    df['forecast_sales'] = (
+        df['historical_sales'] * seasonal * (1 + df['marketing_spend'] / 250000)
+        + np.random.normal(0, 3000, n_samples)
+    ).round().astype(int)
+    return df
 
 
-def train_sales_model():
+def train_sales_model(model_path: str = SAVED_MODELS_DIR):
     """Train and evaluate sales forecasting model."""
     print('=== Training Sales Forecasting Model ===')
 
     # Generate synthetic data
-    df = generate_sample_data(n_samples=200)
+    df = generate_sample_data(n_samples=1000)
     print(f'Generated {len(df)} training samples')
 
     # Prepare data
-    model = SalesForecastingModel()
+    model = SalesForecastingModel(model_path=model_path)
     X = model.prepare_data(df)
     y = df['forecast_sales'].values
 
@@ -53,7 +61,8 @@ def train_sales_model():
 
     # Save model
     model.save_models()
-    print('\nModel saved to ml_engine/saved_models/')
+    save_metrics('sales_forecast', {'rmse': rmse, 'r2_score': r2, 'mae': np.mean(np.abs(y_test - y_pred)), 'samples': len(df)}, model_path)
+    print(f'\nModel saved to {model_path}')
 
     # Test prediction
     print('\n=== Sample Prediction ===')
@@ -67,6 +76,8 @@ def train_sales_model():
     prediction = model.forecast_sales(test_features)
     print(f'Sales Forecast Prediction: {prediction}')
 
+
+main = train_sales_model
 
 if __name__ == '__main__':
     train_sales_model()

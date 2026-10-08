@@ -7,6 +7,7 @@ import SalesAnalytics from './pages/SalesAnalytics';
 import DoctorSegmentation from './pages/DoctorSegmentation';
 import AIAssistant from './pages/AIAssistant';
 import ExecutiveDashboard from './pages/ExecutiveDashboard';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/doctors" element={<DoctorSegmentation />} />
             <Route path="/executive" element={<ExecutiveDashboard />} />
             <Route path="/ai" element={<AIAssistant />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </main>
       </div>

@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -12,6 +12,47 @@ const handleError = (error: AxiosError) => {
     return Promise.reject(error.response.data);
   }
   return Promise.reject(error.message);
+};
+
+export type ApiResult = {
+  request: { method: string; url: string; body?: unknown };
+  status: number;
+  ok: boolean;
+  data: any;
+};
+
+// For the test forms: never throws, so the HTTP status (200, 401, 422, ...) can be shown as-is.
+export const callApi = async (
+  method: 'get' | 'post',
+  url: string,
+  body?: unknown,
+  headers?: Record<string, string>
+): Promise<ApiResult> => {
+  const request = { method: method.toUpperCase(), url: `/api${url}`, body };
+  try {
+    const response = await api.request({ method, url, data: body, headers, validateStatus: () => true });
+    return { request, status: response.status, ok: response.status >= 200 && response.status < 300, data: response.data };
+  } catch {
+    return {
+      request,
+      status: 0,
+      ok: false,
+      data: { detail: 'Cannot reach the API. Is the backend running on port 8000?' }
+    };
+  }
+};
+
+export const apiRoot = (api.defaults.baseURL ?? '').replace(/\/api\/?$/, '');
+
+// Turns any rejection from this module (FastAPI error body, Axios error or plain string)
+// into a message that can be shown to the user.
+export const getErrorMessage = (error: unknown, fallback: string): string => {
+  const body = error instanceof AxiosError ? error.response?.data : error;
+  if (typeof body === 'string' && body) return body;
+  const detail = (body as { detail?: unknown } | undefined)?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail) && detail[0]?.msg) return String(detail[0].msg);
+  return fallback;
 };
 
 export const getPatients = () => api.get('/patients').catch(handleError);

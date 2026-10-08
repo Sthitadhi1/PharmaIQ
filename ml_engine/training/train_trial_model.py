@@ -3,6 +3,7 @@ import numpy as np
 from ml_engine.models.trial_dropout_model import TrialDropoutModel
 from ml_engine.evaluation.model_metrics import calculate_accuracy, calculate_precision, calculate_recall, calculate_f1_score
 from sklearn.model_selection import train_test_split
+from ml_engine.training.paths import SAVED_MODELS_DIR, save_metrics
 
 
 def generate_sample_data(n_samples=200):
@@ -15,21 +16,29 @@ def generate_sample_data(n_samples=200):
         'side_effects_severity': np.random.randint(0, 10, n_samples),
         'health_score': np.random.randint(40, 100, n_samples),
         'visit_compliance': np.random.randint(50, 100, n_samples),
-        'dropout': np.random.randint(0, 2, n_samples)  # Binary: 0=Stayed, 1=Dropout
     }
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    # Labels were previously random; derive them from the dropout drivers plus noise.
+    signal = (
+        (df['side_effects_severity'] - 4.5) / 2.5
+        - (df['visit_compliance'] - 75) / 12
+        - (df['health_score'] - 70) / 15
+        + (df['trial_duration'] - 18) / 12
+    )
+    df['dropout'] = (signal + np.random.normal(0, 0.8, n_samples) > 0).astype(int)  # 0=Stayed, 1=Dropout
+    return df
 
 
-def train_trial_model():
+def train_trial_model(model_path: str = SAVED_MODELS_DIR):
     """Train and evaluate trial dropout prediction model."""
     print('=== Training Clinical Trial Dropout Prediction Model ===')
 
     # Generate synthetic data
-    df = generate_sample_data(n_samples=200)
+    df = generate_sample_data(n_samples=1000)
     print(f'Generated {len(df)} training samples')
 
     # Prepare data
-    model = TrialDropoutModel()
+    model = TrialDropoutModel(model_path=model_path)
     X = model.prepare_data(df)
     y = df['dropout'].values
 
@@ -55,7 +64,8 @@ def train_trial_model():
 
     # Save model
     model.save_models()
-    print('\nModel saved to ml_engine/saved_models/')
+    save_metrics('trial_dropout', {'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1_score': f1, 'samples': len(df)}, model_path)
+    print(f'\nModel saved to {model_path}')
 
     # Test prediction
     print('\n=== Sample Prediction ===')
@@ -70,6 +80,8 @@ def train_trial_model():
     prediction = model.predict_dropout_risk(test_features)
     print(f'Trial Dropout Risk Prediction: {prediction}')
 
+
+main = train_trial_model
 
 if __name__ == '__main__':
     train_trial_model()

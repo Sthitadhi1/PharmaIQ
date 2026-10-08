@@ -7,6 +7,8 @@ type DocumentUploadProps = {
 function DocumentUpload({ onUpload }: DocumentUploadProps) {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    // Reset so choosing the same file again still fires onChange (e.g. retry after a failure).
+    event.target.value = '';
     if (file) {
       onUpload(file);
     }

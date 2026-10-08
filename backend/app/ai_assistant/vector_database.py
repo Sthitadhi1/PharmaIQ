@@ -51,6 +51,27 @@ class VectorDatabase:
         self.metadata.extend(metadata)
         self._save_index()
 
+    def replace_source(self, source: str, embeddings: np.ndarray, metadata: List[Dict[str, Any]]):
+        """Drop every chunk of `source`, then add its new chunks (so re-uploading a file never duplicates it)."""
+        keep = [i for i, item in enumerate(self.metadata) if item.get('source') != source]
+        self.embeddings = [self.embeddings[i] for i in keep]
+        self.metadata = [self.metadata[i] for i in keep]
+        if embeddings.size and metadata:
+            self.dim = embeddings.shape[1]
+            self.embeddings.extend(list(np.asarray(embeddings, dtype=np.float32)))
+            self.metadata.extend(metadata)
+        self.index = None
+        if FAISS_AVAILABLE and self.embeddings:
+            self.index = faiss.IndexFlatIP(self.dim)
+            self.index.add(np.vstack(self.embeddings).astype(np.float32))
+        self._save_index()
+
+    def sources(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for item in self.metadata:
+            counts[item.get('source', '')] = counts.get(item.get('source', ''), 0) + 1
+        return counts
+
     def search(self, query_embedding: np.ndarray, top_k: int = 3) -> List[Dict[str, Any]]:
         if self.dim == 0 or query_embedding.size == 0:
             return []

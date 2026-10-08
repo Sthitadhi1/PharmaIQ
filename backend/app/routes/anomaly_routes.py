@@ -1,21 +1,20 @@
 from fastapi import APIRouter
 
-from anomaly_detection import AnomalyDetector
+from app.services import anomaly_service
 
 router = APIRouter(prefix='/api/anomalies', tags=['Anomaly Detection'])
-engine = AnomalyDetector()
 
 
 @router.get('/sales')
 def detect_sales_anomaly():
-    return engine.detect({'type': 'sales'})
+    return anomaly_service.sales_anomalies()
 
 
 @router.get('/patient')
 def detect_patient_anomaly():
-    return engine.detect({'type': 'patient'})
+    return anomaly_service.patient_anomalies()
 
 
 @router.get('/trial')
 def detect_trial_anomaly():
-    return engine.detect({'type': 'trial'})
+    return anomaly_service.trial_anomalies()

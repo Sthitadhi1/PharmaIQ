@@ -132,3 +132,11 @@ tmp/
 temp/
 *.bak
 *.orig
+# ==========================================================
+# Runtime data
+# ==========================================================
+# Documents uploaded through the AI assistant (pharma_sales.csv is a tracked sample)
+backend/documents/*
+!backend/documents/pharma_sales.csv
+# Stray npm lockfile (the backend is Python)
+backend/package-lock.json

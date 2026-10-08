@@ -1,31 +1,25 @@
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import MetricCard from '../components/MetricCard';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import SalesForecastForm from '../components/forms/SalesForecastForm';
+import AnomalyPanel from '../components/AnomalyPanel';
 import ChartCard from '../components/ChartCard';
+import DataState, { SourceNote } from '../components/DataState';
+import MetricCard from '../components/MetricCard';
+import useApiData from '../hooks/useApiData';
+import type { SalesAnalytics as SalesStats } from '../types/analytics';
+import { formatMoney, formatNumber } from '../utils/formatters';
 
-const salesForecastData = [
-  { month: 'Jan', actual: 420, forecast: 430, variance: 2.4 },
-  { month: 'Feb', actual: 540, forecast: 535, variance: -0.9 },
-  { month: 'Mar', actual: 610, forecast: 620, variance: 1.6 },
-  { month: 'Apr', actual: 720, forecast: 710, variance: -1.4 },
-  { month: 'May', actual: 650, forecast: 665, variance: 2.3 },
-  { month: 'Jun', forecast: 780, variance: 1.2 }
-];
-
-const productForecast = [
-  { product: 'Drug A', current: 180, forecast: 215, growth: '19%' },
-  { product: 'Drug B', current: 152, forecast: 172, growth: '13%' },
-  { product: 'Drug C', current: 98, forecast: 115, growth: '17%' },
-  { product: 'Drug D', current: 65, forecast: 78, growth: '20%' }
-];
-
-const regionPerformance = [
-  { region: 'North', q1: 120, q2: 145, q3: 168, q4: 192 },
-  { region: 'South', q1: 100, q2: 118, q3: 135, q4: 155 },
-  { region: 'East', q1: 145, q2: 168, q3: 185, q4: 210 },
-  { region: 'West', q1: 85, q2: 102, q3: 120, q4: 140 }
-];
+const MEDICINE_COLORS = ['#2563eb', '#ea580c', '#0ea5e9'];
 
 function SalesAnalytics() {
+  const { data: s, loading, error } = useApiData<SalesStats>('/analytics/sales');
+
+  const trend = s
+    ? [
+        ...s.monthly.filter((row) => row.complete).map((row) => ({ month: row.month, actual: row.revenue })),
+        ...s.forecast.forecast.map((row) => ({ month: row.month, forecast: row.revenue }))
+      ]
+    : [];
+
   return (
     <div className="space-y-8">
       <header>
@@ -33,100 +27,73 @@ function SalesAnalytics() {
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Sales Forecasting & Analytics</h1>
       </header>
 
-      <div className="grid gap-5 md:grid-cols-3">
-        <MetricCard title="Forecast Accuracy" value="89%" subtitle="Model confidence" />
-        <MetricCard title="Expected Growth" value="+16%" subtitle="Next quarter projection" />
-        <MetricCard title="Stock Recommendation" value="28,500" subtitle="Units suggested" />
-      </div>
+      <SalesForecastForm />
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ChartCard title="Sales Forecast vs Actual">
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={salesForecastData}>
-              <defs>
-                <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area type="monotone" dataKey="actual" stroke="#10b981" fill="#10b981" name="Actual Sales" />
-              <Area type="monotone" dataKey="forecast" stroke="#3b82f6" fillOpacity={1} fill="url(#colorForecast)" name="Forecast" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Product-wise Forecast">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={productForecast}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="product" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="current" fill="#8b5cf6" name="Current Sales" />
-              <Bar dataKey="forecast" fill="#3b82f6" name="Forecasted Sales" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ChartCard title="Regional Quarterly Performance">
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={regionPerformance}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="region" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="q1" stroke="#ef4444" strokeWidth={2} name="Q1" />
-              <Line type="monotone" dataKey="q2" stroke="#f59e0b" strokeWidth={2} name="Q2" />
-              <Line type="monotone" dataKey="q3" stroke="#3b82f6" strokeWidth={2} name="Q3" />
-              <Line type="monotone" dataKey="q4" stroke="#10b981" strokeWidth={2} name="Q4" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Forecast Confidence">
-          <div className="space-y-4 p-4">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700">High Confidence</span>
-                <span className="text-xs text-slate-600">Products with {'<'} 10% variance</span>
-              </div>
-              <div className="mt-2 h-3 rounded-full bg-slate-200">
-                <div className="h-full w-4/5 rounded-full bg-green-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">80%</p>
+      <DataState loading={loading} error={error} ready={!!s}>
+        {s && (
+          <>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <MetricCard title="Total Revenue" value={formatMoney(s.total_revenue)} subtitle={`${s.period.start} to ${s.period.end}`} />
+              <MetricCard title="Units Sold" value={formatNumber(s.total_units)} subtitle="All medicines and regions" />
+              <MetricCard title="Marketing ROI" value={`${s.roi.toFixed(2)}x`} subtitle={`${formatMoney(s.total_marketing)} spent`} />
+              <MetricCard title="Next 3 Months (forecast)" value={formatMoney(s.forecast.next_3_months_revenue)} subtitle={`Recent growth ${s.recent_growth_pct}%`} />
             </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700">Medium Confidence</span>
-                <span className="text-xs text-slate-600">Products with 10-20% variance</span>
-              </div>
-              <div className="mt-2 h-3 rounded-full bg-slate-200">
-                <div className="h-full w-3/5 rounded-full bg-yellow-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">60%</p>
+            <SourceNote files="pharma_sales.csv" />
+
+            <ChartCard title="Monthly Revenue and 3-Month Forecast">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" minTickGap={30} />
+                  <YAxis tickFormatter={formatMoney} width={70} />
+                  <Tooltip formatter={(value: number) => formatMoney(value)} />
+                  <Legend />
+                  <Line type="monotone" dataKey="actual" name="Actual" stroke="#2563eb" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#ea580c" strokeWidth={3} strokeDasharray="6 4" />
+                </LineChart>
+              </ResponsiveContainer>
+              <p className="mt-2 text-xs text-slate-500">{s.forecast.method}; the latest partial month is excluded.</p>
+            </ChartCard>
+
+            <div className="grid gap-5 xl:grid-cols-3">
+              <ChartCard title="Revenue by Region">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={s.by_region}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="region" />
+                    <YAxis tickFormatter={formatMoney} width={70} />
+                    <Tooltip formatter={(value: number) => formatMoney(value)} />
+                    <Bar dataKey="revenue" name="Revenue" fill="#2563eb" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+              <ChartCard title="Revenue Share by Medicine">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie isAnimationActive={false} data={s.by_medicine} dataKey="revenue" nameKey="medicine" outerRadius={95} label={({ medicine, share_pct }) => `${medicine}: ${share_pct}%`}>
+                      {s.by_medicine.map((entry, index) => <Cell key={entry.medicine} fill={MEDICINE_COLORS[index % MEDICINE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatMoney(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+              <ChartCard title="Marketing ROI by Medicine (revenue per $)">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={s.by_medicine}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="medicine" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="roi" name="ROI" fill="#ea580c" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
             </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700">Low Confidence</span>
-                <span className="text-xs text-slate-600">Products with {'>'} 20% variance</span>
-              </div>
-              <div className="mt-2 h-3 rounded-full bg-slate-200">
-                <div className="h-full w-1/4 rounded-full bg-red-500"></div>
-              </div>
-              <p className="mt-1 text-sm text-slate-600">25%</p>
-            </div>
-          </div>
-        </ChartCard>
-      </div>
+          </>
+        )}
+      </DataState>
+
+      <AnomalyPanel kind="sales" title="Unusual sales days (|z| ≥ 3)" />
     </div>
   );
 }

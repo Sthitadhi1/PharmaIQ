@@ -1,3 +1,6 @@
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.patient_routes import router as patient_router
@@ -14,20 +17,32 @@ from app.routes.executive_routes import router as executive_router
 from app.routes.explainability_routes import router as explainability_router
 from app.routes.monitoring_routes import router as monitoring_router
 from app.routes.security_routes import router as security_router
+from app.routes.rag_routes import router as rag_router
+from app.routes.analytics_routes import router as analytics_router
 from app.ai_assistant import ai_router
+from app.ai_assistant.chat_controller import warm_up as warm_up_ai
 from app.ml_services import ml_router
-from app.database.config import ENVIRONMENT, API_VERSION
+from app.database.config import ENVIRONMENT, API_VERSION, CORS_ORIGINS
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Background thread: the API serves requests immediately while the AI model loads.
+    threading.Thread(target=warm_up_ai, daemon=True).start()
+    yield
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title='PharmaIQ Life Sciences API',
     version=API_VERSION,
     description='Enterprise AI-powered pharmaceutical analytics platform'
 )
 
-# CORS Middleware
+# CORS Middleware. A '*' origin combined with allow_credentials lets any website make
+# authenticated requests on a user's behalf, so origins come from an explicit allowlist.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:5173', 'http://localhost:3000', '*'],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*']
@@ -35,6 +50,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(dashboard_router)
+app.include_router(analytics_router)
 app.include_router(patient_router)
 app.include_router(clinical_router)
 app.include_router(sales_router)
@@ -50,6 +66,7 @@ app.include_router(explainability_router)
 app.include_router(monitoring_router)
 app.include_router(executive_router)
 app.include_router(ai_router)
+app.include_router(rag_router)
 
 # Health check
 @app.get('/health')

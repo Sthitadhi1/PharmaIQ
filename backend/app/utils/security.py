@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'super-secret-key')
+from app.database.config import SECRET_KEY
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '15'))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv('REFRESH_TOKEN_EXPIRE_DAYS', '7'))
@@ -116,6 +116,12 @@ def create_refresh_token(username: str) -> str:
 
 def decode_token(token: str) -> Optional[dict]:
     return _decode_jwt(token)
+
+
+def is_active_refresh_token(token: str, username: str) -> bool:
+    """Only the most recently issued refresh token for a user is accepted."""
+    stored = refresh_token_store.get(username)
+    return stored is not None and hmac.compare_digest(stored, token)
 
 
 def authorize_role(token_data: dict, roles: list[str]) -> bool:

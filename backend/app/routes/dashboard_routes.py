@@ -1,27 +1,22 @@
-import json
 from fastapi import APIRouter
-from app.utils.cache import RedisCache
+
+from app.services import analytics_service
 
 router = APIRouter()
-cache = RedisCache()
+
 
 @router.get('/')
 def root():
     return {'message': 'PharmaIQ Life Sciences Intelligence API Running'}
 
+
 @router.get('/api/dashboard/kpis')
 def dashboard_kpis():
-    cache_key = 'dashboard_kpis'
-    cached = cache.get(cache_key)
-    if cached:
-        return json.loads(cached)
-
-    payload = {
-        'total_patients': 1920,
-        'active_trials': 28,
-        'high_risk_patients': 314,
-        'revenue_forecast': 4.8,
-        'last_updated': '2026-06-07T00:00:00Z'
+    overview = analytics_service.overview()
+    return {
+        'total_patients': overview['total_patients'],
+        'active_trials': overview['active_trial_participants'],
+        'high_risk_patients': overview['high_risk_patients'],
+        'revenue_forecast': round(overview['revenue_forecast_3m'] / 1_000_000, 2),
+        'last_updated': overview['last_updated'],
     }
-    cache.set(cache_key, json.dumps(payload), expire=300)
-    return payload

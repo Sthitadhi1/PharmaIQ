@@ -1,13 +1,10 @@
 from typing import Dict
 
+from app.services.analytics_service import model_metrics
+
 
 class PerformanceTracker:
-    def __init__(self):
-        self.performance = {
-            'patient-risk': {'accuracy': 91, 'precision': 88, 'recall': 86},
-            'trial-dropout': {'accuracy': 89, 'precision': 85, 'recall': 82},
-            'sales-forecast': {'rmse': 5.7, 'mae': 4.2}
-        }
+    """Evaluation metrics recorded by the training scripts (ml_engine/saved_models/metrics.json)."""
 
     def get_metrics(self) -> Dict[str, Dict[str, object]]:
-        return self.performance
+        return model_metrics()

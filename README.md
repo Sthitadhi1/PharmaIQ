@@ -448,6 +448,12 @@ Seed data for local development is provided in [`database/seed_data.sql`](databa
 
 ## Testing
 
+Train the ML models first (the `/api/ml/*` endpoints return 503 until this is done):
+
+```bash
+python -m ml_engine.training.train_all
+```
+
 Run the backend test suite (config in `pytest.ini`, tests in `backend/tests/`):
 
 ```bash
@@ -467,6 +473,9 @@ Test modules cover:
 - ML models (`test_ml_models.py`)
 - AI/RAG engine (`test_ai_engine_rag.py`)
 - Enterprise-level integration (`test_enterprise_api.py`)
+- Regression tests for every fixed defect (`test_regressions.py`)
+
+Manual test cases, bug reports and the fix methodology are documented in [docs/TESTING_AND_BUG_REPORT.md](docs/TESTING_AND_BUG_REPORT.md).
 
 ---
 

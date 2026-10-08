@@ -1,5 +1,7 @@
 import os
 
+from app.utils.logger import logger
+
 try:
     from kafka import KafkaProducer
     KAFKA_AVAILABLE = True
@@ -22,7 +24,7 @@ class KafkaProducerClient:
 
     def send(self, message: str):
         if self.producer is None:
-            print(f'[KafkaProducer] Fallback send to topic {self.topic}: {message}')
+            logger.warning('Kafka unavailable; dropped message for topic %s', self.topic)
             return False
         self.producer.send(self.topic, message)
         self.producer.flush()

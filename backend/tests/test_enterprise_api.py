@@ -9,13 +9,19 @@ def client():
 
 
 def test_explainability_patient_endpoint(client):
-    response = client.get('/api/explainability/patient/1001')
+    # Patient 1 in patients.csv is recorded as HIGH risk (age 86, 6 prior admissions).
+    response = client.get('/api/explainability/patient/1')
     assert response.status_code == 200
     body = response.json()
     assert body['prediction'] == 'High Risk'
-    assert 'reason' in body
-    assert 'details' in body
-    assert body['details']['risk_score'] == 87
+    assert body['details']['recorded_risk_level'] == 'HIGH'
+    assert body['details']['risk_score'] > 50
+    assert body['details']['top_risk_factors']
+    assert body['reason'].startswith('Risk increased mainly by')
+
+
+def test_explainability_unknown_patient_returns_404(client):
+    assert client.get('/api/explainability/patient/999999').status_code == 404
 
 
 def test_model_monitoring_status(client):

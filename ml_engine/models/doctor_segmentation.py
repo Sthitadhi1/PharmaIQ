@@ -17,6 +17,7 @@ class DoctorSegmentationModel:
         self.kmeans_model = None
         self.scaler = StandardScaler()
         self.n_clusters = n_clusters
+        self.cluster_rank = {}
         self.feature_names = [
             'prescription_frequency', 'patient_volume', 'engagement_score', 'specialization_code', 'region_code'
         ]
@@ -36,6 +37,11 @@ class DoctorSegmentationModel:
         """Train K-Means clustering model."""
         self.kmeans_model = KMeans(n_clusters=self.n_clusters, random_state=42, n_init=10)
         self.kmeans_model.fit(X)
+        # K-Means cluster ids are arbitrary, so rank clusters by their mean engagement
+        # (highest first) and map that rank onto segment_labels (0 = High Value).
+        engagement_idx = self.feature_names.index('engagement_score')
+        ranked = np.argsort(-self.kmeans_model.cluster_centers_[:, engagement_idx])
+        self.cluster_rank = {int(cluster): rank for rank, cluster in enumerate(ranked)}
 
     def predict_segment(self, X: np.ndarray) -> np.ndarray:
         """
@@ -60,7 +66,8 @@ class DoctorSegmentationModel:
         ]])
 
         X_scaled = self.scaler.transform(X)
-        segment_id = self.predict_segment(X_scaled)[0]
+        cluster_id = int(self.predict_segment(X_scaled)[0])
+        segment_id = self.cluster_rank.get(cluster_id, cluster_id)
         segment_info = self.segment_labels.get(segment_id, {'name': 'Unknown', 'description': 'Unclassified'})
 
         return {
@@ -84,8 +91,10 @@ class DoctorSegmentationModel:
         os.makedirs(self.model_path, exist_ok=True)
         joblib.dump(self.kmeans_model, os.path.join(self.model_path, 'doctor_kmeans_model.pkl'))
         joblib.dump(self.scaler, os.path.join(self.model_path, 'doctor_scaler.pkl'))
+        joblib.dump(self.cluster_rank, os.path.join(self.model_path, 'doctor_cluster_rank.pkl'))
 
     def load_models(self):
         """Load trained models from disk."""
         self.kmeans_model = joblib.load(os.path.join(self.model_path, 'doctor_kmeans_model.pkl'))
         self.scaler = joblib.load(os.path.join(self.model_path, 'doctor_scaler.pkl'))
+        self.cluster_rank = joblib.load(os.path.join(self.model_path, 'doctor_cluster_rank.pkl'))

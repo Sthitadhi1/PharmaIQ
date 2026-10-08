@@ -21,7 +21,7 @@ def publish_patient_event(event: PatientEvent):
     success = producer.send(f'patient_id={event.patient_id}&status={event.status}')
     if not success:
         raise HTTPException(status_code=503, detail='Kafka producer unavailable')
-    return {'status': 'sent', 'topic': 'patient_updates', 'payload': event.dict()}
+    return {'status': 'sent', 'topic': 'patient_updates', 'payload': event.model_dump()}
 
 
 @router.post('/sales-event')
@@ -30,4 +30,4 @@ def publish_sales_event(event: SalesEvent):
     success = producer.send(f'region={event.region}&revenue={event.revenue}')
     if not success:
         raise HTTPException(status_code=503, detail='Kafka producer unavailable')
-    return {'status': 'sent', 'topic': 'sales_events', 'payload': event.dict()}
+    return {'status': 'sent', 'topic': 'sales_events', 'payload': event.model_dump()}
